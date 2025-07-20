@@ -66,9 +66,8 @@ export function HelloWorldMenu() {
 
   const insertTranscript = () => {
     if (editor && finalTranscript.trim()) {
-      const plateEditor = editor as PlateEditor;
-      plateEditor.insertText(finalTranscript);
-      plateEditor.setOption(HelloWorldPlugin, 'open', false);
+      editor.run((e) => e.insertText(finalTranscript));
+      editor.run((e) => e.setOption(HelloWorldPlugin, 'open', false));
     }
   };
 
@@ -80,13 +79,9 @@ export function HelloWorldMenu() {
       ];
       for (const retailer of retailers) {
         const script = `Hello ${retailer.contact}, this is a message for ${retailer.name}. ${finalTranscript}`;
-        await generateAndInsertAudio(
-          editor as PlateEditor,
-          retailer.id,
-          script
-        );
+        await generateAndInsertAudio(editor, retailer.id, script);
       }
-      (editor as PlateEditor).setOption(HelloWorldPlugin, 'open', false);
+      editor.run((e) => e.setOption(HelloWorldPlugin, 'open', false));
     }
   };
 
@@ -112,7 +107,7 @@ export function HelloWorldMenu() {
       open={open}
       onOpenChange={(newOpen) => {
         if (editor) {
-          (editor as PlateEditor).setOption(HelloWorldPlugin, 'open', newOpen);
+          editor.run((e) => e.setOption(HelloWorldPlugin, 'open', newOpen));
         }
         if (!newOpen && isListening) {
           stopListening();
