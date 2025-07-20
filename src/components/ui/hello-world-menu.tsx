@@ -66,22 +66,26 @@ export function HelloWorldMenu() {
 
   const insertTranscript = () => {
     if (editor && finalTranscript.trim()) {
-      editor.run((e) => e.insertText(finalTranscript));
-      editor.run((e) => e.setOption(HelloWorldPlugin, 'open', false));
+      const plateEditor = editor as PlateEditor;
+      if (plateEditor.insertText) {
+        plateEditor.insertText(finalTranscript);
+        plateEditor.setOption(HelloWorldPlugin, 'open', false);
+      }
     }
   };
 
   const generateAudioOutreach = async () => {
     if (editor) {
+      const plateEditor = editor as PlateEditor;
       const retailers = [
         { id: 'retailer-1', name: 'Gadgetopia Inc.', contact: 'Aliza' },
         { id: 'retailer-2', name: 'Innovate & Co.', contact: 'Ben' },
       ];
       for (const retailer of retailers) {
         const script = `Hello ${retailer.contact}, this is a message for ${retailer.name}. ${finalTranscript}`;
-        await generateAndInsertAudio(editor, retailer.id, script);
+        await generateAndInsertAudio(plateEditor, retailer.id, script);
       }
-      editor.run((e) => e.setOption(HelloWorldPlugin, 'open', false));
+      plateEditor.setOption(HelloWorldPlugin, 'open', false);
     }
   };
 
@@ -107,7 +111,8 @@ export function HelloWorldMenu() {
       open={open}
       onOpenChange={(newOpen) => {
         if (editor) {
-          editor.run((e) => e.setOption(HelloWorldPlugin, 'open', newOpen));
+          const plateEditor = editor as PlateEditor;
+          plateEditor.setOption(HelloWorldPlugin, 'open', newOpen);
         }
         if (!newOpen && isListening) {
           stopListening();
