@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export const useSpeechToText = () => {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [finalTranscript, setFinalTranscript] = useState('');
   const recognitionRef = useRef<any>(null);
   const listeningIntentRef = useRef(false);
 
@@ -24,13 +25,22 @@ export const useSpeechToText = () => {
     recognition.lang = 'en-US';
 
     recognition.onresult = (event) => {
-      let newTranscript = '';
+      let newInterim = '';
+      let newFinal = '';
+
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
-          newTranscript += event.results[i][0].transcript;
+          newFinal += event.results[i][0].transcript;
+        } else {
+          newInterim += event.results[i][0].transcript;
         }
       }
-      setTranscript((prev) => prev + newTranscript);
+
+      setInterimTranscript(newInterim);
+      if (newFinal) {
+        setFinalTranscript((prev) => prev + newFinal);
+        setInterimTranscript('');
+      }
     };
 
     recognition.onerror = (event) => {
@@ -49,13 +59,16 @@ export const useSpeechToText = () => {
 
     return () => {
       listeningIntentRef.current = false;
-      recognition.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
     };
   }, []);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
-      setTranscript('');
+      setInterimTranscript('');
+      setFinalTranscript('');
       listeningIntentRef.current = true;
       recognitionRef.current.start();
       setIsListening(true);
@@ -70,10 +83,14 @@ export const useSpeechToText = () => {
     }
   }, [isListening]);
 
+  const transcript = finalTranscript + interimTranscript;
+
   return {
     isListening,
     transcript,
+    finalTranscript,
     startListening,
     stopListening,
   };
 }; 
+

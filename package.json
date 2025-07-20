@@ -18,6 +18,7 @@
     "@ai-sdk/provider-utils": "^2.2.8",
     "@ai-sdk/react": "^1.2.12",
     "@ariakit/react": "^0.4.17",
+    "@elevenlabs/elevenlabs-js": "^2.6.0",
     "@emoji-mart/data": "1.2.1",
     "@faker-js/faker": "^9.8.0",
     "@platejs/ai": "^49.0.1",

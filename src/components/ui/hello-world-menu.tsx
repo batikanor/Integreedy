@@ -2,30 +2,64 @@
 
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
 import {
-    type PlateEditor,
-    useEditorRef,
-    usePluginOption,
+  type PlateEditor,
+  useEditorRef,
+  usePluginOption,
 } from 'platejs/react';
 import * as React from 'react';
 
 import {
-    Popover,
-    PopoverAnchor,
-    PopoverContent,
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
 } from '@/components/ui/popover';
 
 import { HelloWorldPlugin } from '@/components/editor/plugins/hello-world-kit';
 import { Button } from './button';
 
-function isPlateEditor(editor: unknown): editor is PlateEditor {
-  return editor != null && typeof (editor as any).id !== 'undefined';
+async function generateAndInsertAudio(editor: PlateEditor, retailerId: string, script: string) {
+  const res = await fetch('/api/generate-audio', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: script }),
+  });
+
+  if (!res.ok) {
+    console.error('Failed to generate audio');
+    return;
+  }
+
+  const audioBlob = await res.blob();
+  const audioUrl = URL.createObjectURL(audioBlob);
+
+  // Find all nodes that match the retailer ID
+  const nodeEntries = Array.from(
+    editor.api.nodes({
+      at: [],
+      match: (node) => (node as any).id === retailerId,
+    })
+  );
+
+  if (nodeEntries.length > 0) {
+    const [, path] = nodeEntries[0];
+    // Insert the audio node after the retailer paragraph
+    editor.tf.insertNodes(
+      {
+        type: 'audio',
+        url: audioUrl,
+        children: [{ text: '' }],
+      },
+      { at: [path[0] + 1] }
+    );
+  }
 }
 
 export function HelloWorldMenu() {
   const editor = useEditorRef();
   const open = usePluginOption(HelloWorldPlugin, 'open');
   const anchorEl = usePluginOption(HelloWorldPlugin, 'anchorEl');
-  const { transcript, startListening, stopListening } = useSpeechToText();
+  const { transcript, finalTranscript, startListening, stopListening } =
+    useSpeechToText();
 
   React.useEffect(() => {
     if (open) {
@@ -36,9 +70,24 @@ export function HelloWorldMenu() {
   }, [open, startListening, stopListening]);
 
   const insertTranscript = () => {
-    if (isPlateEditor(editor)) {
-      editor.insertText(transcript);
-      editor.setOption(HelloWorldPlugin, 'open', false);
+    if (editor && finalTranscript.trim()) {
+      const plateEditor = editor as PlateEditor;
+      plateEditor.insertText(finalTranscript);
+      plateEditor.setOption(HelloWorldPlugin, 'open', false);
+    }
+  };
+
+  const generateAudioOutreach = async () => {
+    if (editor) {
+      const retailers = [
+        { id: 'retailer-1', name: 'Gadgetopia Inc.', contact: 'Aliza' },
+        { id: 'retailer-2', name: 'Innovate & Co.', contact: 'Ben' },
+      ];
+      for (const retailer of retailers) {
+        const script = `Hello ${retailer.contact}, this is a message for ${retailer.name}. ${finalTranscript}`;
+        await generateAndInsertAudio(editor as PlateEditor, retailer.id, script);
+      }
+      (editor as PlateEditor).setOption(HelloWorldPlugin, 'open', false);
     }
   };
 
@@ -50,8 +99,8 @@ export function HelloWorldMenu() {
     <Popover
       open={open}
       onOpenChange={(newOpen) => {
-        if (isPlateEditor(editor)) {
-          editor.setOption(HelloWorldPlugin, 'open', newOpen);
+        if (editor) {
+          (editor as PlateEditor).setOption(HelloWorldPlugin, 'open', newOpen);
         }
         if (!newOpen) {
           stopListening();
@@ -60,12 +109,15 @@ export function HelloWorldMenu() {
     >
       <PopoverAnchor virtualRef={{ current: anchorEl }} />
       <PopoverContent>
-        <div>
+        <div className="space-y-2">
           <p>Listening...</p>
-          <p>{transcript}</p>
-          <Button onClick={insertTranscript} disabled={!transcript}>
-            Insert
-          </Button>
+          <p className="text-sm text-gray-600">{transcript}</p>
+          <div className="flex gap-2">
+            <Button onClick={insertTranscript} disabled={!transcript}>
+              Insert
+            </Button>
+            <Button onClick={generateAudioOutreach}>Generate Audio Outreach</Button>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
