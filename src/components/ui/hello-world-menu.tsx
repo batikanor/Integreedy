@@ -58,16 +58,22 @@ export function HelloWorldMenu() {
   const editor = useEditorRef();
   const open = usePluginOption(HelloWorldPlugin, 'open');
   const anchorEl = usePluginOption(HelloWorldPlugin, 'anchorEl');
-  const { transcript, finalTranscript, startListening, stopListening } =
-    useSpeechToText();
+  const {
+    transcript,
+    finalTranscript,
+    startListening,
+    stopListening,
+    error,
+    isListening,
+  } = useSpeechToText();
 
   React.useEffect(() => {
     if (open) {
       startListening();
-    } else {
+    } else if (isListening) {
       stopListening();
     }
-  }, [open, startListening, stopListening]);
+  }, [open, startListening, stopListening, isListening]);
 
   const insertTranscript = () => {
     if (editor && finalTranscript.trim()) {
@@ -85,7 +91,11 @@ export function HelloWorldMenu() {
       ];
       for (const retailer of retailers) {
         const script = `Hello ${retailer.contact}, this is a message for ${retailer.name}. ${finalTranscript}`;
-        await generateAndInsertAudio(editor as PlateEditor, retailer.id, script);
+        await generateAndInsertAudio(
+          editor as PlateEditor,
+          retailer.id,
+          script
+        );
       }
       (editor as PlateEditor).setOption(HelloWorldPlugin, 'open', false);
     }
@@ -95,6 +105,19 @@ export function HelloWorldMenu() {
     return null;
   }
 
+  const getStatusMessage = () => {
+    if (error === 'not-allowed' || error === 'service-not-allowed') {
+      return 'Error: Microphone access denied. Please allow microphone permissions in your browser settings.';
+    }
+    if (error) {
+      return `Error: ${error}`;
+    }
+    if (isListening) {
+      return 'Listening...';
+    }
+    return 'Press the button to start speaking.';
+  };
+
   return (
     <Popover
       open={open}
@@ -102,21 +125,23 @@ export function HelloWorldMenu() {
         if (editor) {
           (editor as PlateEditor).setOption(HelloWorldPlugin, 'open', newOpen);
         }
-        if (!newOpen) {
-          stopListening();
-        }
       }}
     >
       <PopoverAnchor virtualRef={{ current: anchorEl }} />
       <PopoverContent>
-        <div className="space-y-2">
-          <p>Listening...</p>
-          <p className="text-sm text-gray-600">{transcript}</p>
+        <div className="space-y-2 p-4">
+          <p className="text-sm font-medium">{getStatusMessage()}</p>
+          <p className="text-sm text-gray-600 min-h-[20px]">{transcript}</p>
           <div className="flex gap-2">
-            <Button onClick={insertTranscript} disabled={!transcript}>
+            <Button onClick={insertTranscript} disabled={!transcript.trim()}>
               Insert
             </Button>
-            <Button onClick={generateAudioOutreach}>Generate Audio Outreach</Button>
+            <Button
+              onClick={generateAudioOutreach}
+              disabled={!finalTranscript.trim()}
+            >
+              Generate Audio Outreach
+            </Button>
           </div>
         </div>
       </PopoverContent>

@@ -37,102 +37,69 @@ declare global {
 
 export const useSpeechToText = () => {
   const [isListening, setIsListening] = useState(false);
-  const [interimTranscript, setInterimTranscript] = useState('');
-  const [finalTranscript, setFinalTranscript] = useState('');
+  const [transcript, setTranscript] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-
-  // This ref tracks the user's *intent* to listen, which is more reliable
-  // for the onend handler than the `isListening` state.
-  const listeningIntentRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const SpeechRecognition =
+    const SpeechRecognitionAPI =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.error('Speech recognition not supported in this browser.');
+    if (!SpeechRecognitionAPI) {
+      setError('Speech recognition not supported in this browser.');
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognitionRef.current = recognition;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let newInterim = '';
-      let newFinal = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          newFinal += event.results[i][0].transcript;
-        } else {
-          newInterim += event.results[i][0].transcript;
-        }
-      }
-
-      setInterimTranscript(newInterim);
-      if (newFinal) {
-        setFinalTranscript((prev) => prev + newFinal);
-        setInterimTranscript('');
-      }
+      const currentTranscript = Array.from(event.results)
+        .map((result) => result[0])
+        .map((result) => result.transcript)
+        .join('');
+      setTranscript(currentTranscript);
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error, event.message);
-      // If permission is denied, stop trying to listen.
-      if (
-        event.error === 'not-allowed' ||
-        event.error === 'service-not-allowed'
-      ) {
-        listeningIntentRef.current = false;
-        setIsListening(false);
-      }
+      setError(event.error);
+      setIsListening(false);
     };
 
     recognition.onend = () => {
-      // The `onend` event can fire for various reasons.
-      // We only want to restart if we are still intentionally listening.
-      if (listeningIntentRef.current) {
-        recognition.start();
-      } else {
-        setIsListening(false);
-      }
+      setIsListening(false);
     };
 
-    recognitionRef.current = recognition;
-
-    // Cleanup function to stop recognition when the component unmounts.
     return () => {
-      listeningIntentRef.current = false;
       recognitionRef.current?.stop();
     };
   }, []);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current) {
-      setInterimTranscript('');
-      setFinalTranscript('');
-      listeningIntentRef.current = true;
-      recognitionRef.current.start();
+      setError(null);
+      setTranscript('');
       setIsListening(true);
+      recognitionRef.current.start();
     }
   }, []);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
-      listeningIntentRef.current = false;
-      recognitionRef.current.stop();
       setIsListening(false);
+      recognitionRef.current.stop();
     }
   }, []);
-
-  const transcript = finalTranscript + interimTranscript;
 
   return {
     isListening,
     transcript,
-    finalTranscript,
+    finalTranscript: transcript, // Use the live transcript as final for simplicity
+    error,
     startListening,
     stopListening,
   };
