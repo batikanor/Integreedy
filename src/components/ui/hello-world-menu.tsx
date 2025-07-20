@@ -3,7 +3,7 @@
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
 import {
   type PlateEditor,
-  useEditorRef,
+  useEditorPlugin,
   usePluginOption,
 } from 'platejs/react';
 
@@ -52,7 +52,7 @@ async function generateAndInsertAudio(editor: PlateEditor, retailerId: string, s
 }
 
 export function HelloWorldMenu() {
-  const editor = useEditorRef();
+  const { editor, setOption } = useEditorPlugin(HelloWorldPlugin);
   const open = usePluginOption(HelloWorldPlugin, 'open');
   const anchorEl = usePluginOption(HelloWorldPlugin, 'anchorEl');
   const {
@@ -65,28 +65,22 @@ export function HelloWorldMenu() {
   } = useSpeechToText();
 
   const insertTranscript = () => {
-    if (editor && finalTranscript.trim()) {
-      const plateEditor = editor as PlateEditor;
-      if (plateEditor.insertText) {
-        plateEditor.insertText(finalTranscript);
-        plateEditor.setOption(HelloWorldPlugin, 'open', false);
-      }
+    if (finalTranscript.trim()) {
+      editor.insertText(finalTranscript);
+      setOption('open', false);
     }
   };
 
   const generateAudioOutreach = async () => {
-    if (editor) {
-      const plateEditor = editor as PlateEditor;
-      const retailers = [
-        { id: 'retailer-1', name: 'Gadgetopia Inc.', contact: 'Aliza' },
-        { id: 'retailer-2', name: 'Innovate & Co.', contact: 'Ben' },
-      ];
-      for (const retailer of retailers) {
-        const script = `Hello ${retailer.contact}, this is a message for ${retailer.name}. ${finalTranscript}`;
-        await generateAndInsertAudio(plateEditor, retailer.id, script);
-      }
-      plateEditor.setOption(HelloWorldPlugin, 'open', false);
+    const retailers = [
+      { id: 'retailer-1', name: 'Gadgetopia Inc.', contact: 'Aliza' },
+      { id: 'retailer-2', name: 'Innovate & Co.', contact: 'Ben' },
+    ];
+    for (const retailer of retailers) {
+      const script = `Hello ${retailer.contact}, this is a message for ${retailer.name}. ${finalTranscript}`;
+      await generateAndInsertAudio(editor, retailer.id, script);
     }
+    setOption('open', false);
   };
 
   if (!anchorEl) {
@@ -110,10 +104,7 @@ export function HelloWorldMenu() {
     <Popover
       open={open}
       onOpenChange={(newOpen) => {
-        if (editor) {
-          const plateEditor = editor as PlateEditor;
-          plateEditor.setOption(HelloWorldPlugin, 'open', newOpen);
-        }
+        setOption('open', newOpen);
         if (!newOpen && isListening) {
           stopListening();
         }
