@@ -80,20 +80,20 @@ export const useSpeechToText = () => {
   }, []);
 
   const startListening = useCallback(() => {
-    if (recognitionRef.current) {
+    if (recognitionRef.current && !isListening) {
       setError(null);
       setTranscript('');
       setIsListening(true);
       recognitionRef.current.start();
     }
-  }, []);
+  }, [isListening]);
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
+    if (recognitionRef.current && isListening) {
       setIsListening(false);
       recognitionRef.current.stop();
     }
-  }, []);
+  }, [isListening]);
 
   return {
     isListening,

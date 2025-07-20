@@ -6,7 +6,6 @@ import {
   useEditorRef,
   usePluginOption,
 } from 'platejs/react';
-import * as React from 'react';
 
 import {
   Popover,
@@ -66,14 +65,6 @@ export function HelloWorldMenu() {
     error,
     isListening,
   } = useSpeechToText();
-
-  React.useEffect(() => {
-    if (open && !isListening) {
-      startListening();
-    } else if (!open && isListening) {
-      stopListening();
-    }
-  }, [open, isListening, startListening, stopListening]);
 
   const insertTranscript = () => {
     if (editor && finalTranscript.trim()) {
