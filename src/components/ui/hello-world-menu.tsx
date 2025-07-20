@@ -31,7 +31,6 @@ async function generateAndInsertAudio(editor: PlateEditor, retailerId: string, s
   const audioBlob = await res.blob();
   const audioUrl = URL.createObjectURL(audioBlob);
 
-  // Find all nodes that match the retailer ID
   const nodeEntries = Array.from(
     editor.api.nodes({
       at: [],
@@ -41,7 +40,6 @@ async function generateAndInsertAudio(editor: PlateEditor, retailerId: string, s
 
   if (nodeEntries.length > 0) {
     const [, path] = nodeEntries[0];
-    // Insert the audio node after the retailer paragraph
     editor.tf.insertNodes(
       {
         type: 'audio',
@@ -115,6 +113,9 @@ export function HelloWorldMenu() {
       onOpenChange={(newOpen) => {
         if (editor) {
           (editor as PlateEditor).setOption(HelloWorldPlugin, 'open', newOpen);
+        }
+        if (!newOpen && isListening) {
+          stopListening();
         }
       }}
     >
