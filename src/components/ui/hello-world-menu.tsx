@@ -68,12 +68,12 @@ export function HelloWorldMenu() {
   } = useSpeechToText();
 
   React.useEffect(() => {
-    if (open) {
+    if (open && !isListening) {
       startListening();
-    } else if (isListening) {
+    } else if (!open && isListening) {
       stopListening();
     }
-  }, [open, startListening, stopListening, isListening]);
+  }, [open, isListening, startListening, stopListening]);
 
   const insertTranscript = () => {
     if (editor && finalTranscript.trim()) {
@@ -133,6 +133,9 @@ export function HelloWorldMenu() {
           <p className="text-sm font-medium">{getStatusMessage()}</p>
           <p className="text-sm text-gray-600 min-h-[20px]">{transcript}</p>
           <div className="flex gap-2">
+            <Button onClick={isListening ? stopListening : startListening}>
+              {isListening ? 'Stop' : 'Start'}
+            </Button>
             <Button onClick={insertTranscript} disabled={!transcript.trim()}>
               Insert
             </Button>
