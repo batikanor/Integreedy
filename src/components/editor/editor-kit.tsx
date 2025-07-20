@@ -25,6 +25,7 @@ import { ExitBreakKit } from '@/components/editor/plugins/exit-break-kit';
 import { FixedToolbarKit } from '@/components/editor/plugins/fixed-toolbar-kit';
 import { FloatingToolbarKit } from '@/components/editor/plugins/floating-toolbar-kit';
 import { FontKit } from '@/components/editor/plugins/font-kit';
+import { HelloWorldKit } from '@/components/editor/plugins/hello-world-kit';
 import { LineHeightKit } from '@/components/editor/plugins/line-height-kit';
 import { LinkKit } from '@/components/editor/plugins/link-kit';
 import { ListKit } from '@/components/editor/plugins/list-kit';
@@ -41,6 +42,7 @@ import { ToggleKit } from '@/components/editor/plugins/toggle-kit';
 export const EditorKit = [
   ...CopilotKit,
   ...AIKit,
+  ...HelloWorldKit,
 
   // Elements
   ...BasicBlocksKit,
