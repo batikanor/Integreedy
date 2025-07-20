@@ -120,7 +120,7 @@ export function HelloWorldMenu() {
       }}
     >
       <PopoverAnchor virtualRef={{ current: anchorEl }} />
-      <PopoverContent className="w-80">
+      <PopoverContent className="w-96">
         <div className="space-y-2 p-4">
           <p className="text-sm font-medium whitespace-normal">{getStatusMessage()}</p>
           <p className="text-sm text-gray-600 min-h-[20px] whitespace-normal">{transcript}</p>
